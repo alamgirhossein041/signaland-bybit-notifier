@@ -1,8 +1,28 @@
 [package]
 name = "bybit-harvester"
 version = "0.1.0"
+authors = ["MrWolf <mrwolf@signa.land>", "LuckyExplorer <luckyexplorer@signa.land>"]
+description = "Quantitative trading framework and utilities, made by signa.land"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+futures = "0.3"
+futures-util = "0.3.21"
+http = "0.2.7"
+tokio = { version = "1", features = ["full", "time"] }
+# tungstenite = {version = "0.17.1", features = ["native-tls"]}
+tokio-tungstenite = {version = "0.16.1", features = ["native-tls", "connect"] }
+bytes = "1.1.0"
+serde = "^1"
+serde_json = "^1"
+url = "2.2.2"
+serde_derive = "^1"
+serde_dynamo = "2.4.0"
+signaland-rust-lib = { git = "https://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@github.com/lippolis/signaland-rust-lib", tag = "v0.2.63" }
+openssl = { version = "*", features = ["vendored"] }
+chrono = "0.4.19"
+native-tls = "0.2.10"
+log = "^0.4"
+simple_logger = "2.1.0"
