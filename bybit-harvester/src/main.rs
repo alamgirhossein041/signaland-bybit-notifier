@@ -31,11 +31,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             let accounts = get_users_bybit_streams().await;
             let mut user_connections = users.lock().unwrap();
             for ((user_id, stream_id), (key, secret)) in accounts {
-                println!("Connected User {}, with Stream {}", user_id, stream_id);
+                log::debug!("Connected User {}, with Stream {}", user_id, stream_id);
                 *user_connections
                     .entry((user_id, stream_id))
-                    .or_insert(AuthenticatedDerivativesAccount::new_with_subscriptions(&key, &secret, vec![String::from("execution")])) 
-                    = AuthenticatedDerivativesAccount::new_with_subscriptions(&key, &secret, vec![String::from("execution")]);
+                    .or_insert(AuthenticatedDerivativesAccount::new_with_subscriptions(&key, &secret, vec![String::from("execution"), String::from("wallet")])) 
+                    = AuthenticatedDerivativesAccount::new_with_subscriptions(&key, &secret, vec![String::from("execution"), String::from("wallet")]);
             }
             drop(user_connections);
 
@@ -52,9 +52,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             let message = execution_receiver.try_recv();
             if message.is_err() { continue } // TODO: handle this error
 
+            let raw_data = message.unwrap();
+
             push_to_kinesis(
                 "signaland-vip-websocket-notifications", 
-                bytes::Bytes::from(serde_json::to_string(&message.unwrap()).unwrap()),
+                bytes::Bytes::from(serde_json::to_string(&raw_data).unwrap()),
                 "execution_stream"
             ).await;
         }
@@ -88,12 +90,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             let incoming = auth.private_stream.read_message();
             match incoming {
                 Result::Ok(message) => { 
-                    execution_sender
-                        .send((user_id.clone(), stream_id.clone(), String::from(message.into_text().unwrap())))
-                        .unwrap(); 
+                    // Avoid to send messages that does not have correct body
+                    let data = message.into_text().unwrap();
+                    if data.contains("order_id") {         
+                        println!("{:?}", data);
+                        execution_sender
+                            .send((user_id.clone(), stream_id.clone(), String::from(data)))
+                            .unwrap(); 
+                    }
                     () 
                 },
-                Result::Err(e) => { println!("{:?}", e); continue }
+                Result::Err(_e) => { continue }
             }
         }
 
