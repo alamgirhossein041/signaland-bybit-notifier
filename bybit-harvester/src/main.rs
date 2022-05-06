@@ -34,8 +34,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 log::debug!("Connected User {}, with Stream {}", user_id, stream_id);
                 *user_connections
                     .entry((user_id, stream_id))
-                    .or_insert(AuthenticatedDerivativesAccount::new_with_subscriptions(&key, &secret, vec![String::from("execution"), String::from("wallet")])) 
-                    = AuthenticatedDerivativesAccount::new_with_subscriptions(&key, &secret, vec![String::from("execution"), String::from("wallet")]);
+                    .or_insert(AuthenticatedDerivativesAccount::new_with_subscriptions(&key, &secret, vec![String::from("execution")])) 
+                    = AuthenticatedDerivativesAccount::new_with_subscriptions(&key, &secret, vec![String::from("execution")]);
             }
             drop(user_connections);
 
@@ -92,8 +92,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 Result::Ok(message) => { 
                     // Avoid to send messages that does not have correct body
                     let data = message.into_text().unwrap();
+                    println!("{:?}", data);
                     if data.contains("order_id") {         
-                        println!("{:?}", data);
                         execution_sender
                             .send((user_id.clone(), stream_id.clone(), String::from(data)))
                             .unwrap(); 
