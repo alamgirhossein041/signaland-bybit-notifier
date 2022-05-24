@@ -13,57 +13,14 @@ use simple_logger::SimpleLogger;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    // SimpleLogger::new()
-    //     .with_utc_timestamps()
-    //     .with_level(LevelFilter::Info)
-    //     .init()
-    //     .unwrap();
+    SimpleLogger::new()
+        .with_utc_timestamps()
+        .with_level(LevelFilter::Info)
+        .init()
+        .unwrap();
 
-    // let func = handler_fn(func);
-    // lambda_runtime::run(func).await?;
-
-    let x = r#"
-{
-    "Records": [
-        {
-            "kinesis": {
-                "kinesisSchemaVersion": "1.0",
-                "partitionKey": "execution_stream",
-                "sequenceNumber": "49629772145300376766238595238381810977688592954102382594",
-                "data": "WyIyYzBkODdlOC0xZDc1LTRhNzgtYjJjZC1iYWViNTc3NTcyZmMiLCIxNjg0NzU1NDE3NDI2Iiwie1widG9waWNcIjpcImV4ZWN1dGlvblwiLFwiZGF0YVwiOlt7XCJzeW1ib2xcIjpcIlBFT1BMRVVTRFRcIixcInNpZGVcIjpcIkJ1eVwiLFwib3JkZXJfaWRcIjpcIjhiYjE0MWMwLTBlNmMtNDIyNC04NTI1LTgyODE1MDUyMzJlZVwiLFwiZXhlY19pZFwiOlwiZDlhODEzZDMtZWQyNy01YzM3LWE5ZDUtYTEyNjgyOTE1MGQ3XCIsXCJvcmRlcl9saW5rX2lkXCI6XCJcIixcInByaWNlXCI6MC4wMjYxNSxcIm9yZGVyX3F0eVwiOjMwOTI4LFwiZXhlY190eXBlXCI6XCJUcmFkZVwiLFwiZXhlY19xdHlcIjoyMjQ5Ni45OTgsXCJleGVjX2ZlZVwiOjAuMzUyOTc3OTMsXCJsZWF2ZXNfcXR5XCI6ODQzMSxcImlzX21ha2VyXCI6ZmFsc2UsXCJ0cmFkZV90aW1lXCI6XCIyMDIyLTA1LTI0VDA5OjEyOjA2LjE4OTg4MlpcIn0se1wic3ltYm9sXCI6XCJQRU9QTEVVU0RUXCIsXCJzaWRlXCI6XCJCdXlcIixcIm9yZGVyX2lkXCI6XCI4YmIxNDFjMC0wZTZjLTQyMjQtODUyNS04MjgxNTA1MjMyZWVcIixcImV4ZWNfaWRcIjpcImY3ZjI1OTg2LTgzMzQtNWVmNS1iODcwLWVkMzcyYzBkNjNjNVwiLFwib3JkZXJfbGlua19pZFwiOlwiXCIsXCJwcmljZVwiOjAuMDI2MTUsXCJvcmRlcl9xdHlcIjozMDkyOCxcImV4ZWNfdHlwZVwiOlwiVHJhZGVcIixcImV4ZWNfcXR5XCI6ODQzMSxcImV4ZWNfZmVlXCI6MC4xMzIyODIzOSxcImxlYXZlc19xdHlcIjowLFwiaXNfbWFrZXJcIjpmYWxzZSxcInRyYWRlX3RpbWVcIjpcIjIwMjItMDUtMjRUMDk6MTI6MDYuMTg5ODgyWlwifV19Il0=",
-                "approximateArrivalTimestamp": 1653383526.313
-            },
-            "eventSource": "aws:kinesis",
-            "eventVersion": "1.0",
-            "eventID": "shardId-000000000000:49629772145300376766238595238381810977688592954102382594",
-            "eventName": "aws:kinesis:record",
-            "invokeIdentityArn": "arn:aws:iam::995606098483:role/service-role/tester-kinesis-role-hg6xq0f0",
-            "awsRegion": "eu-central-1",
-            "eventSourceARN": "arn:aws:kinesis:eu-central-1:995606098483:stream/signaland-vip-websocket-notifications"
-        },
-        {
-            "kinesis": {
-                "kinesisSchemaVersion": "1.0",
-                "partitionKey": "execution_stream",
-                "sequenceNumber": "49629772145300376766238595665346605171726150185395421186",
-                "data": "WyJjYThiNjEzYi05Njc3LTRmZGUtOWE5MS00YzFlZWZiNTAyNDIiLCIzMzMuODQ2OTc3NjE1NDIwOTQiLCJ7XCJ0b3BpY1wiOlwiZXhlY3V0aW9uXCIsXCJkYXRhXCI6W3tcInN5bWJvbFwiOlwiV09PVVNEVFwiLFwic2lkZVwiOlwiQnV5XCIsXCJvcmRlcl9pZFwiOlwiMzNhOTZlYmMtMjVjMy00ZTBjLTg3YjEtYzRkZjViNGQwYmQ0XCIsXCJleGVjX2lkXCI6XCJkODY2Njg4Yy0zMDU5LTUwOGQtYjA2Ny0wNDNmZGQ4MWZmNWRcIixcIm9yZGVyX2xpbmtfaWRcIjpcIlRQXzU0NDY2MjE4MDExODI5NjAwOThcIixcInByaWNlXCI6MC4xOTg1LFwib3JkZXJfcXR5XCI6NzQyLjIsXCJleGVjX3R5cGVcIjpcIlRyYWRlXCIsXCJleGVjX3F0eVwiOjc0Mi4yLFwiZXhlY19mZWVcIjowLjAxNDczMjY3LFwibGVhdmVzX3F0eVwiOjAsXCJpc19tYWtlclwiOnRydWUsXCJ0cmFkZV90aW1lXCI6XCIyMDIyLTA1LTI0VDE1OjU2OjU1LjYxODY5NVpcIn1dfSJd",
-                "approximateArrivalTimestamp": 1653407815.96
-            },
-            "eventSource": "aws:kinesis",
-            "eventVersion": "1.0",
-            "eventID": "shardId-000000000000:49629772145300376766238595665346605171726150185395421186",
-            "eventName": "aws:kinesis:record",
-            "invokeIdentityArn": "arn:aws:iam::995606098483:role/service-role/tester-kinesis-role-hg6xq0f0",
-            "awsRegion": "eu-central-1",
-            "eventSourceARN": "arn:aws:kinesis:eu-central-1:995606098483:stream/signaland-vip-websocket-notifications"
-        }
-    ]
-}
-    "#;
-
-    let val: Value = json_decode(x).unwrap();
-
-    func(val, Context::default()).await;
+    let func = handler_fn(func);
+    lambda_runtime::run(func).await?;
 
     println!("OK");
     Ok(())
