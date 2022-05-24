@@ -6,3 +6,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+aws-config = "^0.3"
+#aws-sdk-dynamodb = "^0.3"
+tokio = { version = "1", features = ["full"] }
+lambda_runtime = "^0.4"
+bytes = "1.1.0"
+serde = "^1"
+serde_json = "^1"
+serde_derive = "^1"
+serde_dynamo = "2.4.0"
+log = "^0.4"
+simple_logger = "^1"
+uuid = { version = "^0.8", features = ["v4"] }
+chrono = "0.4.19"
+base64 = "0.13.0"
+signaland-rust-lib = { git = "https://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@github.com/lippolis/signaland-rust-lib", tag = "v0.2.78" }
+openssl = { version = "*", features = ["vendored"] }

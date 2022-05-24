@@ -14,8 +14,6 @@ use signaland::services::exchange::bybit::{
     api::websocket::AuthenticatedDerivativesAccount
 };
 
-use serde_json::to_string;
-
 type Connections = Arc<Mutex<HashMap<(String, String), AuthenticatedDerivativesAccount>>>;
 
 #[tokio::main]
