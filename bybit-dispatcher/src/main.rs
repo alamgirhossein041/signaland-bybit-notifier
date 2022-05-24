@@ -14,42 +14,14 @@ use simple_logger::SimpleLogger;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    // SimpleLogger::new()
-    //     .with_utc_timestamps()
-    //     .with_level(LevelFilter::Info)
-    //     .init()
-    //     .unwrap();
+    SimpleLogger::new()
+        .with_utc_timestamps()
+        .with_level(LevelFilter::Info)
+        .init()
+        .unwrap();
 
-    // let func = handler_fn(func);
-    // lambda_runtime::run(func).await?;
-
-    let data = r#"
-    {
-        "Records": [
-            {
-                "kinesis": {
-                    "kinesisSchemaVersion": "1.0",
-                    "partitionKey": "execution_stream",
-                    "sequenceNumber": "49629772145300376766238594105929011934417023482330087426",
-                    "data": "WyIyYzBkODdlOC0xZDc1LTRhNzgtYjJjZC1iYWViNTc3NTcyZmMiLCIxNjg0NzU1NDE3NDI2Iiwie1widG9waWNcIjpcImV4ZWN1dGlvblwiLFwiZGF0YVwiOlt7XCJzeW1ib2xcIjpcIk9DRUFOVVNEVFwiLFwic2lkZVwiOlwiQnV5XCIsXCJvcmRlcl9pZFwiOlwiMWYwMzZjYjQtMGZkZS00MWNkLTliNzMtYzYyMGZjZDI1NjY0XCIsXCJleGVjX2lkXCI6XCI1NzFmNTM1Mi01NDNlLTU1MmEtYWJhYy1kYTlmODhlNjMwZWZcIixcIm9yZGVyX2xpbmtfaWRcIjpcIlwiLFwicHJpY2VcIjowLjIzNDcsXCJvcmRlcl9xdHlcIjozMTg1Ljk5OTgsXCJleGVjX3R5cGVcIjpcIlRyYWRlXCIsXCJleGVjX3F0eVwiOjI1MDAsXCJleGVjX2ZlZVwiOjAuMzUyMDUsXCJsZWF2ZXNfcXR5XCI6Njg2LFwiaXNfbWFrZXJcIjpmYWxzZSxcInRyYWRlX3RpbWVcIjpcIjIwMjItMDUtMjNUMjI6MDg6MzkuMzM2OTk0WlwifSx7XCJzeW1ib2xcIjpcIk9DRUFOVVNEVFwiLFwic2lkZVwiOlwiQnV5XCIsXCJvcmRlcl9pZFwiOlwiMWYwMzZjYjQtMGZkZS00MWNkLTliNzMtYzYyMGZjZDI1NjY0XCIsXCJleGVjX2lkXCI6XCJhYjYwZTM3Ni0yYjc1LTVjMWUtYTQ2My05YmM1YWU0MjYzZjNcIixcIm9yZGVyX2xpbmtfaWRcIjpcIlwiLFwicHJpY2VcIjowLjIzNDgsXCJvcmRlcl9xdHlcIjozMTg1Ljk5OTgsXCJleGVjX3R5cGVcIjpcIlRyYWRlXCIsXCJleGVjX3F0eVwiOjY4NixcImV4ZWNfZmVlXCI6MC4wOTY2NDM2OCxcImxlYXZlc19xdHlcIjowLFwiaXNfbWFrZXJcIjpmYWxzZSxcInRyYWRlX3RpbWVcIjpcIjIwMjItMDUtMjNUMjI6MDg6MzkuMzM2OTk0WlwifV19Il0=",
-                    "approximateArrivalTimestamp": 1653310875.388
-                },
-                "eventSource": "aws:kinesis",
-                "eventVersion": "1.0",
-                "eventID": "shardId-000000000000:49629772145300376766238594105929011934417023482330087426",
-                "eventName": "aws:kinesis:record",
-                "invokeIdentityArn": "arn:aws:iam::995606098483:role/service-role/tester-kinesis-role-hg6xq0f0",
-                "awsRegion": "eu-central-1",
-                "eventSourceARN": "arn:aws:kinesis:eu-central-1:995606098483:stream/signaland-vip-websocket-notifications"
-            }
-        ]
-    }
-    "#;
-
-    let val: Value = json_decode(data).unwrap();
-    // let order_evt: OrderEvent = OrderEvent::new(val);
-
-    func(val, Context::default()).await;
+    let func = handler_fn(func);
+    lambda_runtime::run(func).await?;
 
     println!("OK");
     Ok(())
@@ -75,6 +47,8 @@ async fn func(event: Value, _: Context) -> Result<Value, Error> {
                     json_encode(&evt.data).unwrap()
                 )
             );
+
+            return Ok(json!(format!("DONE!")));
         } else {
             let open = open.unwrap();
             // Calculate PnL
