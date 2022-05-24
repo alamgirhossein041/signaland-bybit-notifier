@@ -5,7 +5,7 @@
 #LAMBDA_ARCH="linux/arm64" # set this to either linux/arm64 for ARM functions, or linux/amd64 for x86 functions.
 
 RUST_TARGET="x86_64-unknown-linux-musl" # or "aarch64-unknown-linux-musl"
-PROJECT_NAME="signaland-bybit-dispatcher"
+PROJECT_NAME="bybit-dispatcher"
 AWS_FUNCTION_NAME="signaland-bybit-order-dispatcher"
 
 # Add --release to improve performance in production
