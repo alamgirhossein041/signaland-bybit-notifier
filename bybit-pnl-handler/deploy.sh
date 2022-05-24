@@ -6,7 +6,7 @@
 
 RUST_TARGET="x86_64-unknown-linux-musl" # or "aarch64-unknown-linux-musl"
 PROJECT_NAME="bybit-dispatcher"
-AWS_FUNCTION_NAME="signaland-bybit-order-dispatcher"
+AWS_FUNCTION_NAME="signaland-bybit-pnl-handler"
 
 # Add --release to improve performance in production
 #docker run --platform ${LAMBDA_ARCH} \
