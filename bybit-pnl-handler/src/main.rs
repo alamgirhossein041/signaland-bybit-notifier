@@ -28,6 +28,10 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(event: Value, _: Context) -> Result<Value, Error> {
+
+    // Event should have more than one kinesis order, separate orders and
+    
+
     let evt = OrderEvent::new(event);
 
     if evt.is_close() {

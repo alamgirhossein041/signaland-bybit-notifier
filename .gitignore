@@ -1,3 +1,5 @@
 .DS_Store
 bybit-harvester/target
 bybit-dispatcher/target
+bybit-orders-store-handler/target
+bybit-pnl-handler/target
