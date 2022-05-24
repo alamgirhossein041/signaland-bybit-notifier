@@ -2833,7 +2833,7 @@ dependencies = [
 [[package]]
 name = "signaland-rust-lib"
 version = "0.2.26"
-source = "git+https://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@github.com/lippolis/signaland-rust-lib?tag=v0.2.81#3a1115fd0fc6b52b0d9254f1716602a4a108b50d"
+source = "git+https://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@github.com/lippolis/signaland-rust-lib?tag=v0.2.82#ac0dc00889f9b5c42f88e450e351e7fd20b68512"
 dependencies = [
  "async-recursion",
  "bincode",

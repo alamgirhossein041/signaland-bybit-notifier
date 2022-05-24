@@ -20,5 +20,5 @@ simple_logger = "^1"
 uuid = { version = "^0.8", features = ["v4"] }
 chrono = "0.4.19"
 base64 = "0.13.0"
-signaland-rust-lib = { git = "https://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@github.com/lippolis/signaland-rust-lib", tag = "v0.2.78" }
+signaland-rust-lib = { git = "https://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@github.com/lippolis/signaland-rust-lib", tag = "v0.2.83" }
 openssl = { version = "*", features = ["vendored"] }

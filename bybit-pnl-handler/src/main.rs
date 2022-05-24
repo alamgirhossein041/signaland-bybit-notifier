@@ -8,7 +8,6 @@ use signaland_rust_lib::signaland::{
         exchange::bybit::types::{OrderWS, WSResponse},
         users::store::{OrderStore, UserPnL},
     },
-    strategies::Strategies,
 };
 use simple_logger::SimpleLogger;
 
@@ -28,135 +27,71 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(event: Value, _: Context) -> Result<Value, Error> {
+    let pending = UserPnL::pending_pnl("signaland_users_pnl").await;
 
-    // Event should have more than one kinesis order, separate orders and
-    
-
-    let evt = OrderEvent::new(event);
-
-    if evt.is_close() {
-        // Retrieve Opening
-        let open = OrderStore::fetch_last_order(
+    for mut pnl in pending {
+        let orders = OrderStore::fetch_last_orders(
             "signaland_users_orders",
-            *&evt.stream_id.parse::<u64>().unwrap(),
-            &evt.symbol(),
+            pnl.stream_id,
+            &pnl.pair,
+            pnl.timestamp,
         )
         .await;
 
-        if open.is_none() {
-            warn!(
-                "{}",
-                format!(
-                    "Error while retrieving the opening of this order {}",
-                    json_encode(&evt.data).unwrap()
-                )
-            );
+        let open_order = orders
+            .iter()
+            .filter(|x| !x.signal_id.is_empty() && !x.signal_id.contains("TP_"))
+            .collect::<Vec<&OrderStore>>();
 
-            return Ok(json!(format!("DONE!")));
-        } else {
-            let open = open.unwrap();
-            // Calculate PnL
-            let open_order: Vec<OrderWS> = json_decode(&open.data).unwrap();
-            let initial_qty: f64 = open_order.iter().map(|x| x.price).sum::<f64>()
-                / open_order.len() as f64
-                * open_order.iter().map(|x| x.exec_qty).sum::<f64>();
-            let final_qty: f64 = evt.price() * evt.quantity();
-            let fees: f64 = evt.fees() + open_order.iter().map(|x| x.exec_fee).sum::<f64>();
+        let mut close_orders = orders
+            .iter()
+            .filter(|x| x.signal_id.is_empty() || x.signal_id.contains("TP_"))
+            .collect::<Vec<&OrderStore>>();
 
-            let pnl: f64 = if &open_order.first().unwrap().side == "Buy" {
-                final_qty - initial_qty - fees
-            } else {
-                initial_qty - final_qty - fees
-            };
-
-            // Store PnL
-            let strategy = if &open_order.first().unwrap().side == "Buy" {
-                Strategies::LongTonic
-            } else {
-                Strategies::ShortColada
-            };
-
-            let user_pnl = UserPnL::new(
-                evt.user_id.clone(),
-                Exchange::BYBIT,
-                evt.symbol().clone(),
-                strategy,
-                pnl,
-            );
-            user_pnl.store("signaland_users_pnl").await;
+        if close_orders.is_empty() {
+            continue;
         }
+
+        let open_qty = *&open_order.iter().map(|x| x.exec_qty).sum::<f64>();
+        let close_qty = *&close_orders.iter().map(|x| x.exec_qty).sum::<f64>();
+
+        let initial_collateral_qty = *&open_order.iter().map(|x| x.exec_qty * x.price).sum::<f64>();
+        let initial_fees = *&open_order
+            .iter()
+            .map(|x| {
+                let bybit_order: OrderWS = json_decode(&x.data).unwrap();
+                bybit_order.exec_fee
+            })
+            .sum::<f64>();
+
+        close_orders.sort_by_key(|x| x.timestamp);
+        let mut final_collateral = *&close_orders
+            .iter()
+            .map(|x| x.exec_qty * x.price)
+            .sum::<f64>();
+        let final_fees = *&close_orders
+            .iter()
+            .map(|x| {
+                let bybit_order: OrderWS = json_decode(&x.data).unwrap();
+                bybit_order.exec_fee
+            })
+            .sum::<f64>();
+
+        if close_qty != open_qty {
+            let last_order = close_orders.last().unwrap();
+            final_collateral += last_order.price * last_order.leaves_qty;
+        }
+
+        pnl.pnl = if open_order.first().unwrap().data.contains("Buy") {
+            // LONG DEAL
+            final_collateral - initial_collateral_qty - initial_fees - final_fees
+        } else {
+            // SHORT DEAL
+            initial_collateral_qty - final_collateral - initial_fees - final_fees
+        };
+
+        pnl.store("signaland_users_pnl").await;
     }
-
-    let order_store = OrderStore::new(
-        evt.user_id.clone(),
-        evt.stream_id.parse::<u64>().unwrap(),
-        Exchange::BYBIT,
-        evt.symbol().clone(),
-        json_encode(&evt.data).unwrap(),
-    );
-
-    order_store.store_on_dynamo("signaland_users_orders").await;
 
     Ok(json!(format!("DONE!")))
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct OrderEvent {
-    pub user_id: String,
-    pub stream_id: String,
-    pub data: Vec<OrderWS>,
-}
-
-impl OrderEvent {
-    pub fn new(input: Value) -> OrderEvent {
-        let event = input["Records"]
-            .as_array()
-            .unwrap()
-            .first()
-            .unwrap()
-            .as_object()
-            .unwrap()
-            .get("kinesis")
-            .unwrap();
-
-        let kinesis_data = event.get("data").unwrap().as_str().unwrap();
-
-        let data = String::from_utf8(base64::decode(kinesis_data).unwrap()).unwrap();
-
-        let decoded: (String, String, String) = json_decode(&data).unwrap();
-        let orders_data: WSResponse<OrderWS> = json_decode(&decoded.2).unwrap();
-
-        OrderEvent {
-            user_id: decoded.0,
-            stream_id: decoded.1,
-            data: orders_data.data,
-        }
-    }
-
-    pub fn symbol(&self) -> String {
-        self.data.first().unwrap().symbol.clone()
-    }
-
-    pub fn fees(&self) -> f64 {
-        self.data.iter().map(|x| x.exec_fee).sum::<f64>()
-    }
-
-    pub fn price(&self) -> f64 {
-        let leaves = self.data.len() as f64;
-        let prices: f64 = self.data.iter().map(|x| x.price).sum();
-        prices / leaves
-    }
-
-    pub fn quantity(&self) -> f64 {
-        self.data.iter().map(|x| x.exec_qty).sum()
-    }
-
-    pub fn is_open(&self) -> bool {
-        !self.data.first().unwrap().order_link_id.is_empty()
-            && !self.data.first().unwrap().order_link_id.contains("TP_")
-    }
-
-    pub fn is_close(&self) -> bool {
-        !self.is_open()
-    }
 }
