@@ -16,16 +16,14 @@ use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    // SimpleLogger::new()
-    //     .with_utc_timestamps()
-    //     .with_level(LevelFilter::Info)
-    //     .init()
-    //     .unwrap();
+    SimpleLogger::new()
+        .with_utc_timestamps()
+        .with_level(LevelFilter::Info)
+        .init()
+        .unwrap();
 
-    // let func = handler_fn(func);
-    // lambda_runtime::run(func).await?;
-
-    func(Value::default(), Context::default()).await;
+    let func = handler_fn(func);
+    lambda_runtime::run(func).await?;
 
     Ok(())
 }
@@ -62,8 +60,12 @@ async fn func(event: Value, _: Context) -> Result<Value, Error> {
         let mut open_qty = *&open_order.iter().map(|x| x.exec_qty).sum::<f64>();
         let mut close_qty = *&close_orders.iter().map(|x| x.exec_qty).sum::<f64>();
 
-        open_qty = format!("{:.5}", (open_qty * 10000.0).round() / 10000.0).parse::<f64>().unwrap();
-        close_qty = format!("{:.5}", (close_qty * 10000.0).round() / 10000.0).parse::<f64>().unwrap();
+        open_qty = format!("{:.5}", (open_qty * 10000.0).round() / 10000.0)
+            .parse::<f64>()
+            .unwrap();
+        close_qty = format!("{:.5}", (close_qty * 10000.0).round() / 10000.0)
+            .parse::<f64>()
+            .unwrap();
 
         let initial_collateral_qty = *&open_order.iter().map(|x| x.exec_qty * x.price).sum::<f64>();
         let initial_fees = *&open_order
@@ -87,7 +89,13 @@ async fn func(event: Value, _: Context) -> Result<Value, Error> {
             })
             .sum::<f64>();
 
-        if (close_qty - open_qty).abs() > bybit_pairs_infos.get(&pnl.pair).unwrap().lot_size_filter.qty_step {
+        if (close_qty - open_qty).abs()
+            > bybit_pairs_infos
+                .get(&pnl.pair)
+                .unwrap()
+                .lot_size_filter
+                .qty_step
+        {
             let last_order = close_orders.last().unwrap();
             final_collateral += last_order.price * last_order.leaves_qty;
         }
