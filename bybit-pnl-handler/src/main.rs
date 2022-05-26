@@ -2,6 +2,8 @@ use lambda_runtime::{handler_fn, Context, Error};
 use log::{warn, LevelFilter};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_str as json_decode, json, to_string as json_encode, Value};
+use signaland_rust_lib::signaland::services::exchange::bybit::api::client::derivatives::query_symbols;
+use signaland_rust_lib::signaland::services::exchange::bybit::types::FutureSymbolsResponse;
 use signaland_rust_lib::signaland::{
     models::trading::brokers::Exchange,
     services::{
@@ -10,22 +12,28 @@ use signaland_rust_lib::signaland::{
     },
 };
 use simple_logger::SimpleLogger;
+use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    SimpleLogger::new()
-        .with_utc_timestamps()
-        .with_level(LevelFilter::Info)
-        .init()
-        .unwrap();
+    // SimpleLogger::new()
+    //     .with_utc_timestamps()
+    //     .with_level(LevelFilter::Info)
+    //     .init()
+    //     .unwrap();
 
-    let func = handler_fn(func);
-    lambda_runtime::run(func).await?;
+    // let func = handler_fn(func);
+    // lambda_runtime::run(func).await?;
+
+    func(Value::default(), Context::default()).await;
 
     Ok(())
 }
 
 async fn func(event: Value, _: Context) -> Result<Value, Error> {
+    let bybit_pairs_infos: HashMap<String, FutureSymbolsResponse> =
+        query_symbols().await.as_hashmap();
+
     let pending = UserPnL::pending_pnl("signaland_users_pnl").await;
 
     for mut pnl in pending {
@@ -51,8 +59,11 @@ async fn func(event: Value, _: Context) -> Result<Value, Error> {
             continue;
         }
 
-        let open_qty = *&open_order.iter().map(|x| x.exec_qty).sum::<f64>();
-        let close_qty = *&close_orders.iter().map(|x| x.exec_qty).sum::<f64>();
+        let mut open_qty = *&open_order.iter().map(|x| x.exec_qty).sum::<f64>();
+        let mut close_qty = *&close_orders.iter().map(|x| x.exec_qty).sum::<f64>();
+
+        open_qty = format!("{:.5}", (open_qty * 10000.0).round() / 10000.0).parse::<f64>().unwrap();
+        close_qty = format!("{:.5}", (close_qty * 10000.0).round() / 10000.0).parse::<f64>().unwrap();
 
         let initial_collateral_qty = *&open_order.iter().map(|x| x.exec_qty * x.price).sum::<f64>();
         let initial_fees = *&open_order
@@ -76,7 +87,7 @@ async fn func(event: Value, _: Context) -> Result<Value, Error> {
             })
             .sum::<f64>();
 
-        if close_qty < open_qty {
+        if (close_qty - open_qty).abs() > bybit_pairs_infos.get(&pnl.pair).unwrap().lot_size_filter.qty_step {
             let last_order = close_orders.last().unwrap();
             final_collateral += last_order.price * last_order.leaves_qty;
         }
