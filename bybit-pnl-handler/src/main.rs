@@ -22,7 +22,6 @@ async fn main() -> Result<(), Error> {
     let func = handler_fn(func);
     lambda_runtime::run(func).await?;
 
-    println!("OK");
     Ok(())
 }
 
@@ -77,7 +76,7 @@ async fn func(event: Value, _: Context) -> Result<Value, Error> {
             })
             .sum::<f64>();
 
-        if close_qty != open_qty {
+        if close_qty < open_qty {
             let last_order = close_orders.last().unwrap();
             final_collateral += last_order.price * last_order.leaves_qty;
         }
