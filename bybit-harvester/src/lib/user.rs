@@ -106,11 +106,13 @@ pub mod user {
 
     pub async fn get_all_pro_users() -> Result<Vec<User>, &'static str> {
 
+        // Pro Query Output
+
         let ask: &str = "subscription_type = :subtype";
 
         let vars: DyVariables = HashMap::from([ (":subtype".to_string(), string_into_av("pro")) ]);
 
-        let query_output = query(
+        let pro_query_output = query(
             USERS_TABLE_NAME,
             ask,
             vars,
@@ -119,12 +121,32 @@ pub mod user {
             Some(String::from("subscription_type-created_at-index"))
         ).await;
 
-        let res = query_output.items;
-        if res.is_none() { return Err("Error while querying for pro users ") }
+        let pro_res = pro_query_output.items;
+        if pro_res.is_none() { return Err("Error while querying for pro users ") }
 
-        let items: Vec<User> = from_items(res.unwrap()).unwrap();
+        let pro_users: Vec<User> = from_items(pro_res.unwrap()).unwrap();
 
-        Ok(items)
+        // Pro Year Query Output
+
+        let ask: &str = "subscription_type = :subtype";
+
+        let vars: DyVariables = HashMap::from([ (":subtype".to_string(), string_into_av("pro_year")) ]);
+
+        let proyear_query_output = query(
+            USERS_TABLE_NAME,
+            ask,
+            vars,
+            None,
+            None,
+            Some(String::from("subscription_type-created_at-index"))
+        ).await;
+
+        let proyear_res = proyear_query_output.items;
+        if proyear_res.is_none() { return Err("Error while querying for pro users ") }
+
+        let pro_year_users = from_items(proyear_res.unwrap()).unwrap();
+        
+        Ok([pro_users, pro_year_users].concat())
     }
 
     pub async fn get_users_bybit_streams() -> HashMap<(String, String), (String, String)> {
